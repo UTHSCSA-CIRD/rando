@@ -132,6 +132,31 @@ subcall <- function(callobj,rfuns,vnames=setNames(runif(100,-1,1),letters),vtarg
   return(callobj);
 }
 
+usedvars<-function(callobj,used=c()){
+  # Function that returns a list of unique values referenced by anything
+  # inside an unevaluated call (or at any rate, referenced by the first
+  # two arguments)
+  
+  # usage : usedvars(foo);
+  # callobj : Unevaluated call, as returned by subcall(growcall())
+  # used    : Optional variable automatically populated during recursion
+  #           do not set manually
+  if(length(callobj)<2) return(unique(used));
+  if(typeof(callobj[[2]])=='symbol') used <- c(used,callobj[[2]]) else {
+    used <- c(used,usedvars(callobj[[2]],used));
+  }
+  if(length(callobj)<3) return(unique(used));
+  if(typeof(callobj[[3]])=='symbol') used <- c(used,callobj[[3]]) else {
+    used <- c(used,usedvars(callobj[[3]],used));
+  }
+  return(unique(used));
+}
+# Here is how you can extract all unique variables referenced by a collection 
+# of calls named `mycalls`:
+myvars<-setNames(runif(100,-1,1),paste0('v',sample(10000:99999,100)))
+mycalls <- replicate(30,subcall(growcall(),vnames=myvars));
+as.character(unique(do.call(c,sapply(mycalls,usedvars))));
+
 # Here is an end-to-end demo of iteratively creating a data.frame of random
 # data using the above.
 
